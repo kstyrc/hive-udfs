@@ -77,6 +77,7 @@ public class RegexClassifierUDFTest {
 		
 		// preparing mapping file
 		File tmp = File.createTempFile("regex_classifier", ".csv");
+		tmp.deleteOnExit();
 		FileWriter writer = new FileWriter(tmp);
 		writer.append("\"mail.google.com\",\"mail.google.com\"\n");
 		writer.append("\"google.com\",\".*[.]google[.]com\",\".*[.]google[.]pl\"\n");
