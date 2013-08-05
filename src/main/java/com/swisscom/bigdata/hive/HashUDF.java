@@ -38,7 +38,7 @@ public class HashUDF extends GenericUDF {
 		} else if (hashType.equalsIgnoreCase("sha256")) {
 			return new Text(DigestUtils.sha256Hex(input));
 		} else if (hashType.equalsIgnoreCase("sha512")) {
-			return new Text(DigestUtils.sha256Hex(input));
+			return new Text(DigestUtils.sha512Hex(input));
 		} else {
 			return null;
 		}
