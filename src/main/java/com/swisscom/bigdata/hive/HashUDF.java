@@ -1,6 +1,6 @@
 package com.swisscom.bigdata.hive;
 
-import static org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category.PRIMITIVE;
+import static com.swisscom.bigdata.utils.HiveUtils.isPrimitive;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -12,7 +12,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.Text;
 
-import com.swisscom.bigdata.utils.PredicateUtils;
+import com.swisscom.bigdata.utils.ValidationUtils;
 
 @Description(
 	name = "hash", 
@@ -31,7 +31,7 @@ public class HashUDF extends GenericUDF {
 		Object hashSalt = args[2].get();
 		
 		// defensive check - as in other UDF examples
-		if (PredicateUtils.isAnyNull(text, hashType, hashSalt))
+		if (ValidationUtils.isAnyNull(text, hashType, hashSalt))
 			return null;
 		
 		return evaluate(text, hashType, hashSalt);
@@ -63,7 +63,7 @@ public class HashUDF extends GenericUDF {
 	@Override
 	public String getDisplayString(String[] children) {
 		assert (children.length == 2);
-		return "hash(" + children[0] + "," + children[1] + "," + children[2] + ")";
+		return String.format("hash(%s, %s, %s)", children[0], children[1], children[2]);
 	}
 
 	@Override
@@ -89,9 +89,5 @@ public class HashUDF extends GenericUDF {
 				!isPrimitive(args[1]) ||
 				!isPrimitive(args[2]
 		);
-	}
-
-	private boolean isPrimitive(ObjectInspector arg) {
-		return arg.getCategory() == PRIMITIVE;
 	}
 }

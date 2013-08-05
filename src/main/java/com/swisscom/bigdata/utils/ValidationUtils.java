@@ -1,6 +1,6 @@
 package com.swisscom.bigdata.utils;
 
-public class PredicateUtils {
+public class ValidationUtils {
 	
 	public static boolean isNull(Object obj) {
 		return obj == null;
@@ -12,8 +12,9 @@ public class PredicateUtils {
 	
 	public static boolean isAnyNull(Object... objs) {
 		for (Object o : objs) {
-			if (isNull(o))
+			if (isNull(o)) {
 				return true;
+			}
 		}
 		return false;
 	}
