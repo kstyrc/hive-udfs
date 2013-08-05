@@ -62,7 +62,7 @@ public class RegexClassifierUDFTest {
 	}
 	
 	@Test
-	public void shouldReturnCorrectHash() throws Exception {
+	public void shouldClassifyCorrectly() throws Exception {
 		// given
 		ObjectInspector inspector1 = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
 		ObjectInspector inspector2 = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
