@@ -1,5 +1,7 @@
 package com.swisscom.bigdata.hive;
 
+import static org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category.PRIMITIVE;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -10,8 +12,12 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "regex_to_class", 
-value = "_FUNC_(string_column, hash_type, hash_salt) - returns hash value for the input string")
+import com.swisscom.bigdata.utils.PredicateUtils;
+
+@Description(
+	name = "hash", 
+	value = "_FUNC_(string_column, hash_type, hash_salt) - returns hash (with salt) value for the input string"
+)
 public class HashUDF extends GenericUDF {
 
 	protected ObjectInspectorConverters.Converter inputConverter;
@@ -20,16 +26,26 @@ public class HashUDF extends GenericUDF {
 	
 	@Override
 	public Object evaluate(DeferredObject[] args) throws HiveException {
+		Object text = args[0].get();
+		Object hashType = args[1].get();
+		Object hashSalt = args[2].get();
+		
 		// defensive check - as in other UDF examples
-		if (args[0].get() == null || args[1].get() == null || args[2].get() == null)
+		if (PredicateUtils.isAnyNull(text, hashType, hashSalt))
 			return null;
 		
-		// retrieving arguments using converters
-		String text     = ((Text)    inputConverter.convert(args[0].get())).toString();
-		String hashType = ((Text) hashTypeConverter.convert(args[1].get())).toString().toUpperCase();
-		String hashSalt = ((Text) hashSaltConverter.convert(args[2].get())).toString();
+		return evaluate(text, hashType, hashSalt);
+	}
+
+	private Object evaluate(Object textObj, Object hashTypeObj, Object hashSaltObj) {
+		String text     = ((Text)    inputConverter.convert(textObj)).toString();
+		String hashType = ((Text) hashTypeConverter.convert(hashTypeObj)).toString().toUpperCase();
+		String hashSalt = ((Text) hashSaltConverter.convert(hashSaltObj)).toString();
 		
-		// hash the value
+		return hash(text, hashType, hashSalt);
+	}
+
+	private Object hash(String text, String hashType, String hashSalt) {
 		String input = text + hashSalt;
 		if (hashType.equalsIgnoreCase("md5")) {
 			return new Text(DigestUtils.md5Hex(input));
@@ -52,11 +68,7 @@ public class HashUDF extends GenericUDF {
 
 	@Override
 	public ObjectInspector initialize(ObjectInspector[] args) throws UDFArgumentException {
-		if (args.length != 3 || 
-				!(args[0].getCategory() == ObjectInspector.Category.PRIMITIVE) ||
-				!(args[1].getCategory() == ObjectInspector.Category.PRIMITIVE) ||
-				!(args[2].getCategory() == ObjectInspector.Category.PRIMITIVE)) {
-				
+		if (invalidArgs(args)) {
 				throw new UDFArgumentException(
 						"hash() takes three arguments: a string column to hash, hash type and salt");
 		}
@@ -71,4 +83,15 @@ public class HashUDF extends GenericUDF {
 		return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
 	}
 
+	private boolean invalidArgs(ObjectInspector[] args) {
+		return args.length != 3 || 
+				!isPrimitive(args[0]) ||
+				!isPrimitive(args[1]) ||
+				!isPrimitive(args[2]
+		);
+	}
+
+	private boolean isPrimitive(ObjectInspector arg) {
+		return arg.getCategory() == PRIMITIVE;
+	}
 }
